@@ -1,4 +1,4 @@
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, NotRequired
 
 
 class Categories(TypedDict):
@@ -79,6 +79,31 @@ class GrandTotal(TypedDict):
     total_seconds: float
 
 
+class AiAgentBreakdown(TypedDict):
+    name: str
+    lines: int
+    cost: NotRequired[float]
+
+
+class AiAgentSummary(TypedDict):
+    name: str
+    percent: float
+    lines: int
+
+
+class AiCodingSummary(TypedDict):
+    ai_lines: int
+    human_lines: int
+    ai_percent: float
+    human_percent: float
+    dominant_label: str
+    dominant_percent: float
+    tokens_in: int
+    tokens_out: int
+    total_tokens: int
+    agents: list[AiAgentSummary]
+
+
 class Stats(TypedDict):
     human_readable_total: str
     human_readable_total_including_other_language: str
@@ -95,6 +120,15 @@ class Stats(TypedDict):
     user_id: str
     username: str
     is_up_to_date: bool
+    ai_additions: NotRequired[int]
+    ai_deletions: NotRequired[int]
+    human_additions: NotRequired[int]
+    human_deletions: NotRequired[int]
+    ai_input_tokens: NotRequired[int]
+    ai_output_tokens: NotRequired[int]
+    ai_agent_line_changes: NotRequired[dict[str, int]]
+    ai_agent_breakdown: NotRequired[list[AiAgentBreakdown]]
+    ai_agent_costs: NotRequired[dict[str, float]]
 
 
 class StatsBar(TypedDict):

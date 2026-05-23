@@ -8,6 +8,7 @@ import httpx
 
 from .models import SubscriptionType
 from .config import RESOURCES_DIR, CustomSource, config
+from .schema.stats import Stats, AiAgentSummary, AiCodingSummary
 
 
 def image_to_base64(image_path: Path) -> str:
@@ -82,6 +83,69 @@ def calc_work_time_percentage(
     percentage = (total_work_minutes / total_minutes) * 100
 
     return percentage
+
+
+def _build_agent_summary(stats: Stats) -> list[AiAgentSummary]:
+    agents = [
+        (agent["name"], agent["lines"])
+        for agent in stats.get("ai_agent_breakdown", [])
+        if agent["lines"] > 0
+    ]
+
+    if not agents:
+        agents = [
+            (name, lines)
+            for name, lines in stats.get("ai_agent_line_changes", {}).items()
+            if lines > 0
+        ]
+
+    agents = sorted(agents, key=lambda agent: agent[1], reverse=True)
+    if len(agents) > 3:
+        agents = [*agents[:2], ("Other", sum(lines for _, lines in agents[2:]))]
+
+    total_lines = sum(lines for _, lines in agents)
+    if total_lines <= 0:
+        return []
+
+    return [
+        {"name": name, "percent": lines / total_lines * 100, "lines": lines}
+        for name, lines in agents
+    ]
+
+
+def build_ai_coding_summary(stats: Stats) -> AiCodingSummary | None:
+    ai_lines = stats.get("ai_additions", 0) + stats.get("ai_deletions", 0)
+    human_lines = stats.get("human_additions", 0) + stats.get("human_deletions", 0)
+    tokens_in = stats.get("ai_input_tokens", 0)
+    tokens_out = stats.get("ai_output_tokens", 0)
+    agents = _build_agent_summary(stats)
+
+    if ai_lines + human_lines + tokens_in + tokens_out == 0 and not agents:
+        return None
+
+    total_lines = ai_lines + human_lines
+    ai_percent = ai_lines / total_lines * 100 if total_lines else 0.0
+    human_percent = human_lines / total_lines * 100 if total_lines else 0.0
+
+    if ai_percent > human_percent:
+        dominant_label, dominant_percent = "AI-driven", ai_percent
+    elif human_percent > ai_percent:
+        dominant_label, dominant_percent = "Human-led", human_percent
+    else:
+        dominant_label, dominant_percent = "Balanced", ai_percent
+
+    return {
+        "ai_lines": ai_lines,
+        "human_lines": human_lines,
+        "ai_percent": ai_percent,
+        "human_percent": human_percent,
+        "dominant_label": dominant_label,
+        "dominant_percent": dominant_percent,
+        "tokens_in": tokens_in,
+        "tokens_out": tokens_out,
+        "total_tokens": tokens_in + tokens_out,
+        "agents": agents,
+    }
 
 
 def get_date_range(type: SubscriptionType) -> tuple[str, str]:
