@@ -6,7 +6,13 @@ from nonebot_plugin_htmlrender import template_to_pic, template_to_html
 from .config import TEMPLATES_DIR
 from .schema import Stats, WakaTime
 from .models import SubscriptionType
-from .utils import get_date_range, image_to_base64, calc_work_time_percentage
+from .filters import TEMPLATE_FILTERS
+from .utils import (
+    get_date_range,
+    image_to_base64,
+    build_ai_coding_summary,
+    calc_work_time_percentage,
+)
 
 
 async def render(data: WakaTime) -> bytes:
@@ -37,8 +43,10 @@ async def render(data: WakaTime) -> bytes:
             "operating_systems": data["stats"]["operating_systems"],
             "editors": data["stats"]["editors"],
             "languages": data["stats"]["languages"],
+            "ai_coding": build_ai_coding_summary(data["stats"]),
             "all_time_since_today": data["all_time_since_today"],
         },
+        filters=TEMPLATE_FILTERS,
         pages={
             "viewport": {"width": 550, "height": 10},
             "base_url": f"file://{TEMPLATES_DIR}",

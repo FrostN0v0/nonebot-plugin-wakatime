@@ -93,6 +93,18 @@ def fake_waka_user_info() -> tuple["UsersType", "StatsType", "StatsBarType"]:
         user_id="48e5e537-efb7-4304-8562-132953542107",
         username="Komorebi",
         is_up_to_date=True,
+        ai_additions=120,
+        ai_deletions=5,
+        human_additions=40,
+        human_deletions=10,
+        ai_input_tokens=125000,
+        ai_output_tokens=4300,
+        ai_agent_line_changes={"Claude": 80, "Codex": 45},
+        ai_agent_breakdown=[
+            {"name": "Claude", "lines": 80, "cost": 1.2},
+            {"name": "Codex", "lines": 45, "cost": 0.8},
+        ],
+        ai_agent_costs={"Claude": 1.2, "Codex": 0.8},
     )
     stats_bar = StatsBar(
         grand_total={
